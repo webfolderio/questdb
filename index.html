@@ -80,7 +80,13 @@ The goal of this project is to make the fastest and most developer friendly data
 <a name="upcoming-release-change-log" class="anchor" href="#upcoming-release-change-log"><span class="octicon octicon-link"></span></a>Upcoming release Change Log</h3>
 
 <ul>
-<li>nothing yet</li>
+<li>NEW FEATURE:   TCP replication stack</li>
+<li>BREAKING:      All strings are stored with length as 4-byte int. Journal would use more space but it reduces CPU overhead on reads and appends.</li>
+<li>BREAKING:      SymbolIndex class is renamed to KVIndex. SymbolIndex.put() is replaced with KVIndex.add()</li>
+<li>IMPROVEMENT:   Improved Index performance</li>
+<li>IMPROVEMENT:   Improved append performance</li>
+<li>IMPROVEMENT:   Revised data size calculations, Journals should now be smaller</li>
+<li>BUG:           TCP replication broke for tailing null values</li>
 </ul>
       </section>
       <footer>
