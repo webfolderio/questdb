@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
     <script src="javascripts/scale.fix.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -16,29 +17,125 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1 class="header">NFSdb</h1>
-        <p class="header">Need-For-Speed Db. Low-latency, in-process database</p>
-
+        <h1>NFSdb</h1>
+        <p>Don&#39;t let your past hold you back</p>
+        <p class="view"><a href="https://github.com/NFSdb/nfsdb">View the Project on GitHub <small>NFSdb/nfsdb</small></a></p>
         <ul>
-          <li class="download"><a class="buttons" href="https://github.com/NFSdb/nfsdb/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/NFSdb/nfsdb/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/NFSdb/nfsdb">View On GitHub</a></li>
+          <li><a href="https://github.com/NFSdb/nfsdb/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/NFSdb/nfsdb/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/NFSdb/nfsdb">View On <strong>GitHub</strong></a></li>
         </ul>
-
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/NFSdb">NFSdb</a></p>
-
-
       </header>
       <section>
         <h1>
 <a name="nfsdb-wwwnfsdborg-" class="anchor" href="#nfsdb-wwwnfsdborg-"><span class="octicon octicon-link"></span></a>NFSdb (<a href="http://www.nfsdb.org">www.nfsdb.org</a>) <a href="http://travis-ci.org/NFSdb/nfsdb"><img src="https://secure.travis-ci.org/NFSdb/nfsdb.png?branch=master" alt="Build Status"></a>
 </h1>
 
-<p>NFSdb is a low latency, high throughput time-series database written entirely in Java. We use memory-mapped files to bring you fully persisted database with performance characteristics of in-memory cache.
-The goal of this project is to make the fastest and most developer friendly database in the world.</p>
+<h2>
+<a name="what-is-nfsdb" class="anchor" href="#what-is-nfsdb"><span class="octicon octicon-link"></span></a>What is NFSdb?</h2>
+
+<p>NFSdb is a java library that lets you easily persist huge volumes of POJOs on disk with almost zero GC overhead and minimal latency (millions of writes in a second). With NFSdb you can also query these objecs and replicate them over the network.</p>
+
+<h2>
+<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why?</h2>
+
+<p>Storing and quering data for Java developer is always pain in the neck. JDBC requires ORM tools, which is always a maintenance nightmare and performance hog. NoSQL databases are better but come with tricky installation and integration procedures and are not maintenance free either. We wanted to create a library that would help us to:</p>
+
+<pre><code>    - throw away boilerplate persistence layer.
+    - scale application as data volume increases.
+    - throw away caching because our database is fast enough!
+    - have minimal heap footprint.
+    - leverage all of the available memory without using it for heap.
+    - handle timeseries queries efficiently.
+    - provide out of box support for temporal data.
+    - scale processing out to multiple servers
+</code></pre>
+
+<h2>
+<a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How?</h2>
+
+<p>NFSdb provides automatic serialization for primitive types of POJOs to Memory Mapped Files. Files organised on disk in directories per class and files per attributes, providing column-based data store. String values can be indexed for fast searches and if your data has timestamp - it can be partitioned by DAY,MONTH or YEAR. Memory Mapped Files are managed by Operating System, which provides resilience in case of JVM crash and also a way of inter-process communucation as data written by one process is immediately available to all other processes.</p>
+
+<p>NFSdb also provides easy to setup data replication over TCP/IP with automatic service discovery via multicast.</p>
+
+<p>Here is example of fully functional data publisher/server:</p>
+
+<div class="highlight highlight-java"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleReplicationServerMain</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">location</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">SimpleReplicationServerMain</span><span class="o">(</span><span class="n">String</span> <span class="n">location</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">location</span> <span class="o">=</span> <span class="n">location</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="k">new</span> <span class="nf">SimpleReplicationServerMain</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]).</span><span class="na">start</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">JournalFactory</span> <span class="n">factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalFactory</span><span class="o">(</span><span class="n">location</span><span class="o">);</span>
+        <span class="n">JournalServer</span> <span class="n">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalServer</span><span class="o">(</span><span class="n">factory</span><span class="o">);</span>
+
+        <span class="n">JournalWriter</span><span class="o">&lt;</span><span class="n">Price</span><span class="o">&gt;</span> <span class="n">writer</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="na">writer</span><span class="o">(</span><span class="n">Price</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="n">server</span><span class="o">.</span><span class="na">publish</span><span class="o">(</span><span class="n">writer</span><span class="o">);</span>
+
+        <span class="n">server</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">"Publishing: "</span><span class="o">);</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">publishPrice</span><span class="o">(</span><span class="n">writer</span><span class="o">,</span> <span class="mi">1000000</span><span class="o">);</span>
+            <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">2</span><span class="o">));</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">"."</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">" [Done]"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">publishPrice</span><span class="o">(</span><span class="n">JournalWriter</span><span class="o">&lt;</span><span class="n">Price</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">,</span> <span class="kt">int</span> <span class="n">count</span><span class="o">)</span> 
+            <span class="kd">throws</span> <span class="n">JournalException</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">tZero</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="n">Price</span> <span class="n">p</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">Price</span><span class="o">();</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">p</span><span class="o">.</span><span class="na">setTimestamp</span><span class="o">(</span><span class="n">tZero</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+            <span class="n">p</span><span class="o">.</span><span class="na">setSym</span><span class="o">(</span><span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">20</span><span class="o">));</span>
+            <span class="n">p</span><span class="o">.</span><span class="na">setPrice</span><span class="o">(</span><span class="n">i</span> <span class="o">*</span> <span class="mf">1.04598</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+            <span class="n">writer</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">p</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="c1">// commit triggers network publishing</span>
+        <span class="n">writer</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<p>And here is fully funcitonal client:</p>
+
+<div class="highlight highlight-java"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleReplicationClientMain</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">JournalFactory</span> <span class="n">factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalFactory</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="n">JournalClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalClient</span><span class="o">(</span><span class="n">factory</span><span class="o">);</span>
+        <span class="n">client</span><span class="o">.</span><span class="na">subscribe</span><span class="o">(</span><span class="n">Price</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s">"price-copy"</span><span class="o">,</span> <span class="k">new</span> <span class="nf">TxListener</span><span class="o">()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCommit</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"commit received"</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+        <span class="n">client</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Client started"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
 
 <h3>
-<a name="maven" class="anchor" href="#maven"><span class="octicon octicon-link"></span></a>Maven</h3>
+<a name="more-samples" class="anchor" href="#more-samples"><span class="octicon octicon-link"></span></a>More samples</h3>
+
+<p>We have more samples in our <a href="https://github.com/NFSdb/nfsdb/tree/master/nfsdb-samples">Git repository</a> repository.</p>
+
+<h3>
+<a name="performance" class="anchor" href="#performance"><span class="octicon octicon-link"></span></a>Performance</h3>
+
+<p>On test rig (Intel i7-920 @ 4Ghz) NFSdb shows average read latency of 20-30ns and write latency of 60ns per column of data. Read and write do not have any GC overhead.</p>
+
+<h2>
+<a name="maven" class="anchor" href="#maven"><span class="octicon octicon-link"></span></a>Maven</h2>
 
 <p>NFSdb requires minimum of Java 7 and stable release is available from maven Central:</p>
 
@@ -50,34 +147,22 @@ The goal of this project is to make the fastest and most developer friendly data
 
 </pre></div>
 
-<h3>
-<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting started</h3>
-
-<p>Check out our <a href="http://www.nfsdb.org/quick-start/">Quick-Start Guide</a></p>
-
-<p>We also have a growing collection of examples:</p>
-
-<p><a href="https://github.com/NFSdb/nfsdb/tree/master/nfsdb-samples">nfsdb-samples</a> repository.</p>
-
-<h3>
-<a name="performance" class="anchor" href="#performance"><span class="octicon octicon-link"></span></a>Performance</h3>
-
-<p>On test rig (Intel i7-920 @ 4Ghz) NFSdb shows average read latency of 20-30ns and write latency of 60ns per column of data. Read and write do not have any GC overhead.</p>
-
-<h3>
-<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h3>
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>NFSdb is available under <a href="http://www.apache.org/licenses/LICENSE-2.0.txt">Apache 2.0 License</a></p>
 
-<h3>
-<a name="support" class="anchor" href="#support"><span class="octicon octicon-link"></span></a>Support</h3>
+<h2>
+<a name="support" class="anchor" href="#support"><span class="octicon octicon-link"></span></a>Support</h2>
 
-<p>NFSdb project is being actively developed and supported. You can raise and <a href="https://github.com/bluestreak01/nfsdb/issues">Issue</a> on github or join our <a href="https://groups.google.com/forum/#!forum/nfsdb">google group</a></p>
+<p>For support queries please raise an issue on GitHub:</p>
 
-<p>Please visit our official web site <a href="http://nfsdb.org">www.nfsdb.org</a>.</p>
+<p><a href="https://github.com/NFSdb/nfsdb/issues">https://github.com/NFSdb/nfsdb/issues</a></p>
 
-<h3>
-<a name="upcoming-release-change-log" class="anchor" href="#upcoming-release-change-log"><span class="octicon octicon-link"></span></a>Upcoming release Change Log</h3>
+<p>Please visit our official web site <a href="http://nfsdb.org">www.nfsdb.org</a> for more information.</p>
+
+<h2>
+<a name="upcoming-release-change-log" class="anchor" href="#upcoming-release-change-log"><span class="octicon octicon-link"></span></a>Upcoming release Change Log</h2>
 
 <ul>
 <li>NEW FEATURE:   TCP replication stack</li>
@@ -89,11 +174,12 @@ The goal of this project is to make the fastest and most developer friendly data
 <li>BUG:           TCP replication broke for tailing null values</li>
 </ul>
       </section>
-      <footer>
-        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
-      </footer>
     </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/NFSdb">NFSdb</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
+    
   </body>
 </html>
