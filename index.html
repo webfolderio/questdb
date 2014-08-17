@@ -27,38 +27,37 @@
         </ul>
       </header>
       <section>
-        <h1>
-<a name="nfsdb-wwwnfsdborg-" class="anchor" href="#nfsdb-wwwnfsdborg-"><span class="octicon octicon-link"></span></a>NFSdb (<a href="http://www.nfsdb.org">www.nfsdb.org</a>) <a href="http://travis-ci.org/NFSdb/nfsdb"><img src="https://secure.travis-ci.org/NFSdb/nfsdb.png?branch=master" alt="Build Status"></a>
-</h1>
+        <h2>
+<a name="" class="anchor" href="#"><span class="octicon octicon-link"></span></a><a href="http://travis-ci.org/NFSdb/nfsdb"><img src="https://secure.travis-ci.org/NFSdb/nfsdb.png?branch=master" alt="Build Status"></a>
+</h2>
 
 <h2>
 <a name="what-is-nfsdb" class="anchor" href="#what-is-nfsdb"><span class="octicon octicon-link"></span></a>What is NFSdb?</h2>
 
-<p>NFSdb is a java library that lets you easily persist huge volumes of POJOs on disk with almost zero GC overhead and minimal latency (millions of writes in a second). With NFSdb you can also query these objecs and replicate them over the network.</p>
+<p>NFSdb is a java library that lets you easily persist huge volumes of POJOs on disk with almost zero GC overhead and minimal latency (millions of writes in a second). With NFSdb you can also query these objects and replicate them over the network.</p>
 
-<h2>
+<hr><h2>
 <a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why?</h2>
 
-<p>Storing and quering data for Java developer is always pain in the neck. JDBC requires ORM tools, which is always a maintenance nightmare and performance hog. NoSQL databases are better but come with tricky installation and integration procedures and are not maintenance free either. We wanted to create a library that would help us to:</p>
+<p>Storing and querying data for Java developer is always pain in the neck. JDBC requires ORM tools, which is always a maintenance nightmare and performance hog. NoSQL databases are better but come with tricky installation and integration procedures and are not maintenance free either. We wanted to create a library that would help us to:</p>
 
-<pre><code>    - throw away boilerplate persistence layer.
-    - scale application as data volume increases.
-    - throw away caching because our database is fast enough!
-    - have minimal heap footprint.
-    - leverage all of the available memory without using it for heap.
-    - handle timeseries queries efficiently.
-    - provide out of box support for temporal data.
-    - scale processing out to multiple servers
-</code></pre>
-
-<h2>
+<ul>
+<li>throw away boilerplate persistence layer.</li>
+<li>scale application as data volume increases.</li>
+<li>throw away caching because our database is fast enough!</li>
+<li>have minimal heap footprint.</li>
+<li>leverage all of the available memory without using it for heap.</li>
+<li>handle time series queries efficiently.</li>
+<li>provide out of box support for temporal data.</li>
+<li>scale processing out to multiple servers</li>
+</ul><hr><h2>
 <a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How?</h2>
 
-<p>NFSdb provides automatic serialization for primitive types of POJOs to Memory Mapped Files. Files organised on disk in directories per class and files per attributes, providing column-based data store. String values can be indexed for fast searches and if your data has timestamp - it can be partitioned by DAY,MONTH or YEAR. Memory Mapped Files are managed by Operating System, which provides resilience in case of JVM crash and also a way of inter-process communucation as data written by one process is immediately available to all other processes.</p>
+<p>NFSdb provides automatic serialization for primitive types of POJOs to Memory Mapped Files. Files organised on disk in directories per class and files per attributes, providing column-based data store. String values can be indexed for fast searches and if your data has timestamp - it can be partitioned by DAY, MONTH or YEAR. Memory Mapped Files are managed by Operating System, which provides resilience in case of JVM crash and also a way of inter-process communication as data written by one process is immediately available to all other processes.</p>
 
 <p>NFSdb also provides easy to setup data replication over TCP/IP with automatic service discovery via multicast.</p>
 
-<p>Here is example of fully functional data publisher/server:</p>
+<p>This is an example of fully functional data <em>publisher/server</em>:</p>
 
 <div class="highlight highlight-java"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleReplicationServerMain</span> <span class="o">{</span>
 
@@ -106,7 +105,7 @@
 <span class="o">}</span>
 </pre></div>
 
-<p>And here is fully funcitonal client:</p>
+<p>And this is fully functional <em>client</em>:</p>
 
 <div class="highlight highlight-java"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleReplicationClientMain</span> <span class="o">{</span>
     <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
@@ -124,7 +123,7 @@
 <span class="o">}</span>
 </pre></div>
 
-<h3>
+<hr><h3>
 <a name="more-samples" class="anchor" href="#more-samples"><span class="octicon octicon-link"></span></a>More samples</h3>
 
 <p>We have more samples in our <a href="https://github.com/NFSdb/nfsdb/tree/master/nfsdb-samples">Git repository</a> repository.</p>
@@ -165,13 +164,13 @@
 <a name="upcoming-release-change-log" class="anchor" href="#upcoming-release-change-log"><span class="octicon octicon-link"></span></a>Upcoming release Change Log</h2>
 
 <ul>
-<li>NEW FEATURE:   TCP replication stack</li>
-<li>BREAKING:      All strings are stored with length as 4-byte int. Journal would use more space but it reduces CPU overhead on reads and appends.</li>
-<li>BREAKING:      SymbolIndex class is renamed to KVIndex. SymbolIndex.put() is replaced with KVIndex.add()</li>
-<li>IMPROVEMENT:   Improved Index performance</li>
-<li>IMPROVEMENT:   Improved append performance</li>
-<li>IMPROVEMENT:   Revised data size calculations, Journals should now be smaller</li>
-<li>BUG:           TCP replication broke for tailing null values</li>
+<li><p>NEW FEATURE:   TCP/IP replication stack</p></li>
+<li><p>IMPROVEMENT:  Improved Index performance</p></li>
+<li>IMPROVEMENT:  Improved append performance</li>
+<li><p>IMPROVEMENT:  Revised data size calculations, Journals should now be smaller</p></li>
+<li><p>BREAKING:     All strings are stored with length as 4-byte int. Journal would use more space but it reduces CPU overhead on reads and appends.</p></li>
+<li>BREAKING:     SymbolIndex class is renamed to KVIndex. SymbolIndex.put() is replaced with KVIndex.add()</li>
+<li>BREAKING:     nfsdb.xml is no longer used as configuration mechanism</li>
 </ul>
       </section>
     </div>
