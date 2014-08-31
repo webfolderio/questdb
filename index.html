@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Low Latency Storage</title>
+    <title>NFSdb by NFSdb</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -28,10 +28,19 @@
       </header>
       <section>
         <h2>
-<a name="" class="anchor" href="#"><span class="octicon octicon-link"></span></a><a href="http://travis-ci.org/NFSdb/nfsdb"><img src="https://secure.travis-ci.org/NFSdb/nfsdb.png?branch=master" alt="Build Status"></a>
-</h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
 
-<h2>
+<ul>
+<li><a href="#what-is-nfsdb">What is NFSdb?</a></li>
+<li><a href="#why">Why?</a></li>
+<li><a href="#how">How?</a></li>
+<li><a href="#more-examples">Examples</a></li>
+<li><a href="#maven">Maven</a></li>
+<li><a href="#performance">Performance</a></li>
+<li><a href="#license">License</a></li>
+<li>
+<a href="#support">Support</a> </li>
+</ul><h2>
 <a name="what-is-nfsdb" class="anchor" href="#what-is-nfsdb"><span class="octicon octicon-link"></span></a>What is NFSdb?</h2>
 
 <p>NFSdb is a java library that lets you easily persist huge volumes of POJOs on disk with almost zero GC overhead and minimal latency (millions of writes in a second). With NFSdb you can also query these objects and replicate them over the network. Fast. Very, very fast.</p>
@@ -51,7 +60,9 @@
 <li>handle time series queries efficiently.</li>
 <li>provide out of box support for temporal data.</li>
 <li>scale processing out to multiple servers</li>
-</ul><hr><h2>
+</ul><p><a href="#overview">to top</a></p>
+
+<hr><h2>
 <a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How?</h2>
 
 <p>NFSdb provides automatic serialization for primitive types of POJOs to Memory Mapped Files. Files organised on disk in directories per class and files per attributes, providing column-based data store. String values can be indexed for fast searches and if your data has timestamp - it can be partitioned by DAY, MONTH or YEAR. Memory Mapped Files are managed by Operating System, which provides resilience in case of JVM crash and also a way of inter-process communication as data written by one process is immediately available to all other processes.</p>
@@ -106,16 +117,29 @@
 <span class="o">}</span>
 </pre></div>
 
-<p>And this is fully functional <em>client</em>:</p>
+<p>And this is fully functional <em>client</em> measuring transaction latency:</p>
 
 <div class="highlight highlight-java"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleReplicationClientMain</span> <span class="o">{</span>
     <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
         <span class="n">JournalFactory</span> <span class="n">factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalFactory</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
-        <span class="n">JournalClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalClient</span><span class="o">(</span><span class="n">factory</span><span class="o">);</span>
+        <span class="kd">final</span> <span class="n">JournalClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JournalClient</span><span class="o">(</span><span class="n">factory</span><span class="o">);</span>
+
+        <span class="kd">final</span> <span class="n">Journal</span><span class="o">&lt;</span><span class="n">Price</span><span class="o">&gt;</span> <span class="n">reader</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="na">bulkReader</span><span class="o">(</span><span class="n">Price</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="s">"price-copy"</span><span class="o">);</span>
+
         <span class="n">client</span><span class="o">.</span><span class="na">subscribe</span><span class="o">(</span><span class="n">Price</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s">"price-copy"</span><span class="o">,</span> <span class="k">new</span> <span class="nf">TxListener</span><span class="o">()</span> <span class="o">{</span>
             <span class="nd">@Override</span>
             <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCommit</span><span class="o">()</span> <span class="o">{</span>
-                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"commit received"</span><span class="o">);</span>
+                <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+                <span class="kt">long</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+                <span class="k">for</span> <span class="o">(</span><span class="n">Price</span> <span class="n">p</span> <span class="o">:</span> <span class="n">reader</span><span class="o">.</span><span class="na">incrementBuffered</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">t</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">getTimestamp</span><span class="o">();</span>
+                    <span class="o">}</span>
+                    <span class="n">count</span><span class="o">++;</span>
+                <span class="o">}</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"took: "</span>
+                                <span class="o">+</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">t</span><span class="o">)</span> 
+                                <span class="o">+</span> <span class="s">", count="</span> <span class="o">+</span> <span class="n">count</span><span class="o">);</span>
             <span class="o">}</span>
         <span class="o">});</span>
         <span class="n">client</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
@@ -124,27 +148,37 @@
 <span class="o">}</span>
 </pre></div>
 
+<p><a href="#overview">to top</a></p>
+
 <hr><h3>
 <a name="more-examples" class="anchor" href="#more-examples"><span class="octicon octicon-link"></span></a>More examples?</h3>
 
-<p>We have more samples in our <a href="https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples">Git repository</a> repository.</p>
+<p>We have growing collection of examples in our <a href="https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples">git repository</a>.</p>
 
-<h3>
+<p><a href="#overview">to top</a></p>
+
+<hr><h3>
 <a name="performance" class="anchor" href="#performance"><span class="octicon octicon-link"></span></a>Performance</h3>
 
-<p>On test rig (Intel i7-920 @ 4Ghz) NFSdb shows average read latency of 20-30ns and write latency of 60ns per column of data. Read and write do not have any GC overhead.</p>
+<p>On test rig (Intel i7-920 @ 4Ghz) NFSdb shows average read latency of 20-30ns and write latency of 60ns per column of data. Read and write do not have any GC overhead (excluding reading strings - they are immutable).</p>
 
-<h2>
+<p>Above example takes ~500ms to produce and fully consume 1 million objects on localhost.</p>
+
+<p><a href="#overview">to top</a></p>
+
+<hr><h2>
 <a name="maven" class="anchor" href="#maven"><span class="octicon octicon-link"></span></a>Maven</h2>
 
-<p>NFSdb requires minimum of Java 7 and stable release is available from maven Central:</p>
+<p>NFSdb requires minimum of Java 7 and stable release is available from maven Central</p>
 
 <div class="highlight highlight-xml"><pre><span class="nt">&lt;dependency&gt;</span>
     <span class="nt">&lt;groupId&gt;</span>com.nfsdb<span class="nt">&lt;/groupId&gt;</span>
     <span class="nt">&lt;artifactId&gt;</span>nfsdb-core<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>2.0.0<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;version&gt;</span>2.0.1<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </pre></div>
+
+<p>Check out <a href="https://github.com/NFSdb/nfsdb/releases/tag/2.0.1">release notes</a> for details of the release.</p>
 
 <p>Snapshot releases are also available from Maven central. To get hold of those add these lines to pom.xml:</p>
 
@@ -158,23 +192,25 @@
 <span class="nt">&lt;dependency&gt;</span>
     <span class="nt">&lt;groupId&gt;</span>com.nfsdb<span class="nt">&lt;/groupId&gt;</span>
     <span class="nt">&lt;artifactId&gt;</span>nfsdb-core<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>2.0.1-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;version&gt;</span>2.0.2-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </pre></div>
 
-<h2>
+<p><a href="#overview">to top</a></p>
+
+<hr><h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>NFSdb is available under <a href="http://www.apache.org/licenses/LICENSE-2.0.txt">Apache 2.0 License</a></p>
 
-<h2>
+<p><a href="#overview">to top</a></p>
+
+<hr><h2>
 <a name="support" class="anchor" href="#support"><span class="octicon octicon-link"></span></a>Support</h2>
 
-<p>For support queries please raise an issue on GitHub:</p>
+<p>We actively respond to all <a href="https://github.com/NFSdb/nfsdb/issues">issues</a> raised via GitHub. Please do not hesitate to ask questions or request features.</p>
 
-<p><a href="https://github.com/NFSdb/nfsdb/issues">https://github.com/NFSdb/nfsdb/issues</a></p>
-
-<p>Please visit our official web site <a href="http://nfsdb.org">www.nfsdb.org</a> for more information.</p>
+<p><a href="#overview">to top</a></p>
       </section>
     </div>
     <footer>
