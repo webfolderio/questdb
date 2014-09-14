@@ -32,6 +32,10 @@ body {
   box-shadow: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.45) 0 3px 10px;
 }
 
+.rmm {
+  padding-bottom: 20px;
+}
+
 header, section, footer {
   display: block;
 }
@@ -317,6 +321,10 @@ footer p + p {
     -moz-box-shadow: none;
     box-shadow: none;
     width: 100%;
+  }
+  
+  .rmm {
+    padding: 0;
   }
 
   footer {

@@ -1,0 +1,7 @@
+name: NFSdb - Low Latency Storage
+description:
+url: "http://github.nfsdb.org"
+markdown:  redcarpet
+permalink: pretty
+highlighter: pygments
+github: [Repository metadata]
