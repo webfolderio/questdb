@@ -24,8 +24,6 @@ Storing and querying data for Java developer is always pain in the neck. JDBC re
 - provide out of box support for temporal data.
 - scale processing out to multiple servers
 
-[to top](#overview)
-
 ---
 
 ##How?
@@ -114,15 +112,11 @@ public class SimpleReplicationClientMain {
     }
 }
 ```
-[to top](#overview)
-
 ---
 
 ### More examples?
 
 We have growing collection of examples in our [git repository] (https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples).
-
-[to top](#overview)
 
 ---
 
@@ -132,55 +126,14 @@ On test rig (Intel i7-920 @ 4Ghz) NFSdb shows average read latency of 20-30ns an
 
 Above example takes ~500ms to produce and fully consume 1 million objects on localhost.
 
-[to top](#overview)
-
----
-
-##Maven
-
-NFSdb requires minimum of Java 7 and stable release is available from maven Central
-
-```xml
-<dependency>
-    <groupId>com.nfsdb</groupId>
-    <artifactId>nfsdb-core</artifactId>
-    <version>2.0.1</version>
-</dependency>
-```
-Check out [release notes](https://github.com/NFSdb/nfsdb/releases/tag/2.0.1) for details of the release.
-
-Snapshot releases are also available from Maven central. To get hold of those add these lines to pom.xml:
-
-```xml
-<repositories>
-    <repository>
-        <id>sonatype-snapshots</id>
-        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-</repositories>
-
-<dependency>
-    <groupId>com.nfsdb</groupId>
-    <artifactId>nfsdb-core</artifactId>
-    <version>2.0.2-SNAPSHOT</version>
-</dependency>
-```
-
-[to top](#overview)
-
 ---
 
 ## License
 
 NFSdb is available under [Apache 2.0 License] (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-[to top](#overview)
-
 ---
 
 ## Support
 
 We actively respond to all [issues](https://github.com/NFSdb/nfsdb/issues) raised via GitHub. Please do not hesitate to ask questions or request features.
-
-[to top](#overview)
-
