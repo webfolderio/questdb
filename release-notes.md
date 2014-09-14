@@ -27,7 +27,7 @@ Unique keys can be either `String` or `int` fields. In fact it is just an indexe
 Configure `int` "id" field as follows:
 
 ```java
-JournalFactory factory = new JournalFactory(new JournalConfigurationBuilder() {{
+JournalFactory factory = new JournalFactory(new JournalConfigurationBuilder() { {
     $(Order.class)
         .$int("id").index()
         // or .$str("id).index() for String keys
