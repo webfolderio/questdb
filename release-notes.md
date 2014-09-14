@@ -2,6 +2,9 @@
 layout: nav
 ---
 
+## Release notes
+---
+
 # [2.0.1 DRAX] (https://github.com/NFSdb/nfsdb/releases/tag/2.0.1) - 1 Sep 2014
 
 
