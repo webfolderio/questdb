@@ -2,17 +2,8 @@
 layout: nav
 ---
 
-## Installation
+# [2.0.1 DRAX] (https://github.com/NFSdb/nfsdb/releases/tag/2.0.1)
 
-```xml
-<dependency>
-    <groupId>com.nfsdb</groupId>
-    <artifactId>nfsdb-core</artifactId>
-    <version>2.0.1</version>
-</dependency>
-```
-
-## Change log
 
 - #10 Support for sublasses
 - #16 Fixed defect in BulkWriter that could cause index data loss
