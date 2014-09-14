@@ -2,19 +2,6 @@
 layout: nav
 ---
 
-## Overview
-
-* [What is NFSdb?](#what-is-nfsdb)
-* [Why?](#why)
-* [How?](#how)
-* [Examples](#more-examples)
-* [Maven](#maven)
-* [Performance](#performance)
-* [License](#license)
-* [Support](#support) 
-
-
-
 [![Build Status](https://secure.travis-ci.org/NFSdb/nfsdb.png?branch=master)](http://travis-ci.org/NFSdb/nfsdb)
 
 ##What is NFSdb?
