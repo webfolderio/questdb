@@ -2,7 +2,7 @@
 layout: nav
 ---
 
-# [2.0.1 DRAX] (https://github.com/NFSdb/nfsdb/releases/tag/2.0.1)
+# [2.0.1 DRAX] (https://github.com/NFSdb/nfsdb/releases/tag/2.0.1) - 1 Sep 2014
 
 
 - #10 Support for sublasses
