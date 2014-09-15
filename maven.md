@@ -3,6 +3,7 @@ layout: nav
 ---
 
 ##Maven
+---
 
 NFSdb requires minimum of Java 7 and stable release is available from maven Central
 
