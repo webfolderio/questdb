@@ -89,9 +89,9 @@ public class SimpleReplicationClientMain {
         JournalFactory factory = new JournalFactory(args[0]);
         final JournalClient client = new JournalClient(factory);
 
-        final Journal<Price> reader = factory.bulkReader(Price.class, "price-copy");
+        final Journal<Price> reader = factory.bulkReader(Price.class, "price-cpy");
 
-        client.subscribe(Price.class, null, "price-copy", new TxListener() {
+        client.subscribe(Price.class, null, "price-cpy", new TxListener() {
             @Override
             public void onCommit() {
                 int count = 0;
