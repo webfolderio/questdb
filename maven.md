@@ -16,7 +16,7 @@ NFSdb requires minimum of Java 7 and stable release is available from maven Cent
 ```
 Check out [release notes](http://github.nfsdb.org/release-notes/) for details of the release.
 
-Snapshot releases are also available from Maven central. To get hold of those add these lines to pom.xml:
+Snapshot releases are also available from Maven central. To get hold of those add the following lines to pom.xml:
 
 ```xml
 <repositories>
