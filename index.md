@@ -129,6 +129,12 @@ Above example takes ~500ms to produce and fully consume 1 million objects on loc
 
 ---
 
+![YourKit Logo](http://github.nfsdb.org/images/yklogo.png) 
+
+This project is supported by YourKit LLC, creator of powerful [YourKit Java Profiler] (http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET profiler] (http://www.yourkit.com/.net/profiler/index.jsp). It would not be possible to make NFSdb as fast as it is without YourKit.
+
+---
+
 ## License
 
 NFSdb is available under [Apache 2.0 License] (http://www.apache.org/licenses/LICENSE-2.0.txt)
