@@ -6,8 +6,6 @@ layout: nav
 ---
 # [2.1.0 THOR] (https://github.com/NFSdb/nfsdb/releases/tag/2.1.0) - 14 Oct 2014
 
-## New features
-
 ### SSL encryption. 
 
 Replication can be done over secure channel using industry-standard SSL encryption protocol. Configuring SSL is notoriously complicated, so I tried my best to make it as simple as possible for both `JournalServer` and `JournalClient`. I shall let you be the judge though. [More...] (https://github.com/NFSdb/nfsdb/wiki/Replication-over-SSL)
