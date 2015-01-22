@@ -29,7 +29,7 @@ Snapshot releases are also available from Maven central. To get hold of those ad
 <dependency>
     <groupId>com.nfsdb</groupId>
     <artifactId>nfsdb-core</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
