@@ -119,7 +119,7 @@ public class SimpleReplicationClientMain {
 
 ### More examples?
 
-We have growing collection of examples in our [git repository] (https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples).
+We have growing collection of examples in our [git repository](https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples).
 
 ---
 
@@ -133,7 +133,7 @@ Above example takes ~500ms to produce and fully consume 1 million objects on loc
 
 ![YourKit Logo](http://github.nfsdb.org/images/yklogo.png) 
 
-This project is supported by YourKit LLC, creator of powerful [YourKit Java Profiler] (http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET profiler] (http://www.yourkit.com/.net/profiler/index.jsp). It would not be possible to make NFSdb as fast as it is without YourKit.
+This project is supported by YourKit LLC, creator of powerful [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET profiler](http://www.yourkit.com/.net/profiler/index.jsp). It would not be possible to make NFSdb as fast as it is without YourKit.
 
 ---
 
