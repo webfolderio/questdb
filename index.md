@@ -139,7 +139,7 @@ This project is supported by YourKit LLC, creator of powerful [YourKit Java Prof
 
 ## License
 
-NFSdb is available under [Apache 2.0 License] (http://www.apache.org/licenses/LICENSE-2.0.txt)
+NFSdb is available under [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 ---
 
