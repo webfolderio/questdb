@@ -3,5 +3,5 @@ description:
 url: "http://github.nfsdb.org"
 markdown:  redcarpet
 permalink: pretty
-highlighter: pygments
+highlighter: rouge
 github: [Repository metadata]
