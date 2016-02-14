@@ -4,7 +4,7 @@ layout: nav
 
 ## Release notes
 ---
-## [2.1.0 THOR](https://github.com/NFSdb/nfsdb/releases/tag/2.1.0) - 14 Oct 2014
+## 14 Oct 2014 - [2.1.0 THOR](https://github.com/NFSdb/nfsdb/releases/tag/2.1.0)
 
 ### SSL encryption. 
 
@@ -37,7 +37,7 @@ If you have `JournalClient` running on Windows platform you can generate `servic
 Replication protocol is incompatible with previous release of NFSdb. I had to change the protocol to accomodate shared secret exchange.
 
 ---
-## [2.0.1 DRAX](https://github.com/NFSdb/nfsdb/releases/tag/2.0.1) - 1 Sep 2014
+## 1 Sep 2014 - [2.0.1 DRAX](https://github.com/NFSdb/nfsdb/releases/tag/2.0.1)
 
 
 - #10 Support for sublasses
