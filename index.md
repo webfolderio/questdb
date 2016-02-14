@@ -6,13 +6,13 @@ layout: nav
 [![Build Status](https://semaphoreci.com/api/v1/projects/6a252c31-4627-4e49-b487-126062e66bba/681119/badge.svg)](https://semaphoreci.com/bluestreak/nfsdb)
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/NFSdb/nfsdb?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-##What is NFSdb?
+## What is NFSdb?
 
 NFSdb is a java library that lets you easily persist huge volumes of POJOs on disk with almost zero GC overhead and minimal latency (millions of writes in a second). With NFSdb you can also query these objects and replicate them over the network. Fast. Very, very fast.
 
 ---
 
-##Why?
+## Why?
 
 Storing and querying data for Java developer is always pain in the neck. JDBC requires ORM tools, which is always a maintenance nightmare and performance hog. NoSQL databases are better but come with tricky installation and integration procedures and are not maintenance free either. We wanted to create a library that would help us to:
 
@@ -28,7 +28,7 @@ Storing and querying data for Java developer is always pain in the neck. JDBC re
 
 ---
 
-##How?
+## How?
 
 NFSdb provides automatic serialization for primitive types of POJOs to Memory Mapped Files. Files organised on disk in directories per class and files per attributes, providing column-based data store. String values can be indexed for fast searches and if your data has timestamp - it can be partitioned by DAY, MONTH or YEAR. Memory Mapped Files are managed by Operating System, which provides resilience in case of JVM crash and also a way of inter-process communication as data written by one process is immediately available to all other processes.
 
