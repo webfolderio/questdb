@@ -119,7 +119,7 @@ public class SimpleReplicationClientMain {
 
 ### More examples?
 
-We have growing collection of examples in our [git repository](https://github.com/NFSdb/nfsdb/tree/master/nfsdb-examples/src/main/java/org/nfsdb/examples).
+We have growing collection of examples in our [git repository](https://github.com/bluestreak01/questdb/tree/master/examples/src/main/java/org/nfsdb/examples).
 
 ---
 
@@ -131,7 +131,7 @@ Above example takes ~500ms to produce and fully consume 1 million objects on loc
 
 ---
 
-![YourKit Logo](http://github.nfsdb.org/images/yklogo.png) 
+![YourKit Logo](http://www.questdb.org/images/yklogo.png) 
 
 This project is supported by YourKit LLC, creator of powerful [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET profiler](http://www.yourkit.com/.net/profiler/index.jsp). It would not be possible to make NFSdb as fast as it is without YourKit.
 
@@ -141,8 +141,10 @@ This project is supported by YourKit LLC, creator of powerful [YourKit Java Prof
 
 Latest release of NFSdb is available under [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
+The following releases will be available under [GNU Affero GPLv3](https://github.com/bluestreak01/questdb/blob/master/LICENSE.txt)
+
 ---
 
 ## Support
 
-We actively respond to all [issues](https://github.com/NFSdb/nfsdb/issues) raised via GitHub. Please do not hesitate to ask questions or request features.
+We actively respond to all [issues](https://github.com/bluestreak01/questdb/issues) raised via GitHub. Please do not hesitate to ask questions or request features.
