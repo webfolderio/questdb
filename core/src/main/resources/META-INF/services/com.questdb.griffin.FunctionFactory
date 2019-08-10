@@ -83,6 +83,9 @@ com.questdb.griffin.engine.functions.rnd.RndBinFunctionFactory
 com.questdb.griffin.engine.functions.rnd.RndSymbolListFunctionFactory
 com.questdb.griffin.engine.functions.rnd.RndStringListFunctionFactory
 
+com.questdb.griffin.engine.functions.jdbc.JdbcFunctionFactory
+
+
 # date conversion functions
 
 com.questdb.griffin.engine.functions.date.SysdateFunctionFactory
