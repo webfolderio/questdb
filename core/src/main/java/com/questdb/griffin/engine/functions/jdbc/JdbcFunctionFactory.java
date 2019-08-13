@@ -31,6 +31,8 @@ import com.questdb.cairo.sql.*;
 import com.questdb.griffin.FunctionFactory;
 import com.questdb.griffin.engine.functions.CursorFunction;
 import com.questdb.griffin.engine.functions.GenericRecordCursorFactory;
+import com.questdb.ql.NullRecord;
+import com.questdb.std.IntIntHashMap;
 import com.questdb.std.ObjList;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,30 @@ import java.io.IOException;
 import java.sql.*;
 
 public class JdbcFunctionFactory implements FunctionFactory {
+    private static final IntIntHashMap jdbcToQuestColumnType = new IntIntHashMap();
+    static {
+        jdbcToQuestColumnType.put(Types.VARCHAR, ColumnType.STRING);
+        jdbcToQuestColumnType.put(Types.NVARCHAR, ColumnType.STRING);
+        jdbcToQuestColumnType.put(Types.LONGVARCHAR, ColumnType.STRING);
+        jdbcToQuestColumnType.put(Types.LONGNVARCHAR, ColumnType.STRING);
+        jdbcToQuestColumnType.put(Types.TIMESTAMP, ColumnType.TIMESTAMP);
+        jdbcToQuestColumnType.put(Types.TIMESTAMP_WITH_TIMEZONE, ColumnType.TIMESTAMP);
+        jdbcToQuestColumnType.put(Types.TIME, ColumnType.TIMESTAMP);
+        jdbcToQuestColumnType.put(Types.DOUBLE, ColumnType.DOUBLE);
+        jdbcToQuestColumnType.put(Types.FLOAT, ColumnType.FLOAT);
+        jdbcToQuestColumnType.put(Types.INTEGER, ColumnType.INT);
+        jdbcToQuestColumnType.put(Types.SMALLINT, ColumnType.SHORT);
+        jdbcToQuestColumnType.put(Types.BIGINT, ColumnType.LONG);
+        jdbcToQuestColumnType.put(Types.BOOLEAN, ColumnType.BOOLEAN);
+        jdbcToQuestColumnType.put(Types.DATE, ColumnType.DATE);
+        jdbcToQuestColumnType.put(Types.BINARY, ColumnType.BINARY);
+        jdbcToQuestColumnType.put(Types.LONGVARBINARY, ColumnType.BINARY);
+        jdbcToQuestColumnType.put(Types.VARBINARY, ColumnType.BINARY);
+        //jdbcToQuestColumnType.put(ColumnType.BYTE);
+        //jdbcToQuestColumnType.put(ColumnType.SYMBOL);
+    }
+
+    private static final NullRecord NULL = NullRecord.INSTANCE;
 
     @Override
     public String getSignature() {
@@ -83,9 +109,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         ResultSetMetaData metaData = resultSet.getMetaData();
         final GenericRecordMetadata metadata = new GenericRecordMetadata();
         for(int columnIdx = 1; columnIdx<= metaData.getColumnCount(); columnIdx++){
-            String typeName = metaData.getColumnTypeName(columnIdx).replace("BIGINT","LONG").replace("VARCHAR","STRING").replace("INTEGER","INT");
-            //TODO map java.sql.Types.* to com.questdb.cairo.ColumnType
-            metadata.add(new TableColumnMetadata(metaData.getColumnName(columnIdx), ColumnType.columnTypeOf(typeName)));
+            int columnType = jdbcToQuestColumnType.get(metaData.getColumnType(columnIdx));
+            metadata.add(new TableColumnMetadata(metaData.getColumnName(columnIdx), columnType));
         }
         return metadata;
     }
@@ -125,7 +150,6 @@ public class JdbcFunctionFactory implements FunctionFactory {
         private long row;
         private ResultSet resultSet;
         private java.util.function.Function<Boolean,ResultSet> resultSetFunction;
-        //TODO handle null values
 
         JdbcRecord(java.util.function.Function<Boolean,ResultSet> resultSetFunction) {
             this.resultSetFunction = resultSetFunction;
@@ -142,50 +166,78 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public boolean getBool(int col) {
-            return resultSet.getBoolean(col+1);
+            boolean val = resultSet.getBoolean(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getBool(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public byte getByte(int col) {
-            return resultSet.getByte(col+1);
+            byte val = resultSet.getByte(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getByte(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public long getDate(int col) {
             Date date = resultSet.getDate(col + 1);
-            return date!=null?date.getTime():Long.MIN_VALUE;
+            return date!=null ? date.getTime() : NULL.getDate(col);
         }
 
         @Override
         @SneakyThrows
         public double getDouble(int col) {
-            return resultSet.getDouble(col+1);
+            double val = resultSet.getDouble(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getDouble(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public float getFloat(int col) {
-            return resultSet.getFloat(col+1);
+            float val = resultSet.getFloat(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getFloat(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public int getInt(int col) {
-            return resultSet.getInt(col+1);
+            int val = resultSet.getInt(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getInt(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public long getLong(int col) {
-            return resultSet.getLong(col+1);
+            long val = resultSet.getLong(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getLong(col);
+            }
+            return val;
         }
 
         @Override
         @SneakyThrows
         public short getShort(int col) {
-            return resultSet.getShort(col+1);
+            short val = resultSet.getShort(col + 1);
+            if(resultSet.wasNull()){
+                return NULL.getShort(col);
+            }
+            return val;
         }
 
         @Override
@@ -198,7 +250,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public long getTimestamp(int col) {
             Timestamp timestamp = resultSet.getTimestamp(col + 1);
-            return timestamp!=null?timestamp.getTime():Long.MIN_VALUE;
+            return timestamp!=null ? timestamp.getTime() : NULL.getLong(col);
         }
 
         @Override
