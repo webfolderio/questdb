@@ -27,7 +27,9 @@ import com.questdb.cairo.CairoConfiguration;
 import com.questdb.cairo.ColumnType;
 import com.questdb.cairo.GenericRecordMetadata;
 import com.questdb.cairo.TableColumnMetadata;
-import com.questdb.cairo.sql.*;
+import com.questdb.cairo.sql.Function;
+import com.questdb.cairo.sql.NoRandomAccessRecordCursor;
+import com.questdb.cairo.sql.Record;
 import com.questdb.griffin.FunctionFactory;
 import com.questdb.griffin.engine.functions.CursorFunction;
 import com.questdb.griffin.engine.functions.GenericRecordCursorFactory;
@@ -53,6 +55,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         jdbcToQuestColumnType.put(Types.TIME, ColumnType.TIMESTAMP);
         jdbcToQuestColumnType.put(Types.DOUBLE, ColumnType.DOUBLE);
         jdbcToQuestColumnType.put(Types.FLOAT, ColumnType.FLOAT);
+        jdbcToQuestColumnType.put(Types.REAL, ColumnType.FLOAT);
         jdbcToQuestColumnType.put(Types.INTEGER, ColumnType.INT);
         jdbcToQuestColumnType.put(Types.SMALLINT, ColumnType.SHORT);
         jdbcToQuestColumnType.put(Types.BIGINT, ColumnType.LONG);
@@ -89,11 +92,11 @@ public class JdbcFunctionFactory implements FunctionFactory {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Statement statement = connection.createStatement();
+                PreparedStatement statement = connection.prepareStatement(String.valueOf(query));
                 if (strtuctureOnly) {
                     statement.setMaxRows(0);
                 }
-                return statement.executeQuery(String.valueOf(query));//TODO close all db statements/connections
+                return statement.executeQuery();//TODO close all db statements/connections in proxy class close() method
             }
         };
         ResultSet resultSet = function.apply(Boolean.TRUE);
@@ -110,6 +113,10 @@ public class JdbcFunctionFactory implements FunctionFactory {
         final GenericRecordMetadata metadata = new GenericRecordMetadata();
         for(int columnIdx = 1; columnIdx<= metaData.getColumnCount(); columnIdx++){
             int columnType = jdbcToQuestColumnType.get(metaData.getColumnType(columnIdx));
+            if(columnType == -1){
+                throw new IllegalArgumentException("JDBC column type isn't supported " +
+                                                        metaData.getColumnTypeName(columnIdx));
+            }
             metadata.add(new TableColumnMetadata(metaData.getColumnName(columnIdx), columnType));
         }
         return metadata;
@@ -271,9 +278,10 @@ public class JdbcFunctionFactory implements FunctionFactory {
             }
             try {
                 resultSet.close();
-                resultSet=null;
             } catch (SQLException e) {
                 throw new IOException(e);
+            } finally {
+                resultSet=null;
             }
         }
     }
