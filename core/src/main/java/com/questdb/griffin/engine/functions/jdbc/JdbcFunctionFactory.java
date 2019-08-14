@@ -81,10 +81,10 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
         final CharSequence query = args.getQuick(0).getStr(null);
         //TODO externalize database connection/ use pool
-        java.util.function.Function<Boolean,ResultSet> function = new java.util.function.Function<Boolean, ResultSet>() {
+        java.util.function.Function<Boolean, StatementHolder> statementHolderFunction = new java.util.function.Function<Boolean, StatementHolder>() {
             @Override
             @SneakyThrows
-            public ResultSet apply(Boolean strtuctureOnly) {
+            public StatementHolder apply(Boolean strtuctureOnly) {
                 Connection connection = DriverManager.getConnection("jdbc:h2:mem:", "", "");
                 try {
                     connection.createStatement().executeUpdate("CREATE TABLE TEST(X INT, XY LONG, DATA VARCHAR(255), ts TIMESTAMP)");
@@ -96,15 +96,16 @@ public class JdbcFunctionFactory implements FunctionFactory {
                 if (strtuctureOnly) {
                     statement.setMaxRows(0);
                 }
-                return statement.executeQuery();//TODO close all db statements/connections in proxy class close() method
+                return new StatementHolder(connection, statement);
             }
         };
-        ResultSet resultSet = function.apply(Boolean.TRUE);
-        final GenericRecordMetadata metadata = getResultSetMetadata(resultSet);
-        return new CursorFunction(
-                position,
-                new GenericRecordCursorFactory(metadata, new JdbcRecordCursor(function), false)
-        );
+        try (StatementHolder resultSet = statementHolderFunction.apply(Boolean.TRUE)){
+            final GenericRecordMetadata metadata = getResultSetMetadata(resultSet.getResultSet());
+            return new CursorFunction(
+                    position,
+                    new GenericRecordCursorFactory(metadata, new JdbcRecordCursor(statementHolderFunction), false)
+            );
+        }
     }
 
     @NotNull
@@ -126,7 +127,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
         private final JdbcRecord record;
 
-        JdbcRecordCursor(java.util.function.Function<Boolean,ResultSet> function) {
+        JdbcRecordCursor(java.util.function.Function<Boolean,StatementHolder> function) {
             record = new JdbcRecord(function);
         }
 
@@ -154,27 +155,25 @@ public class JdbcFunctionFactory implements FunctionFactory {
     }
 
     static class JdbcRecord implements Record, Closeable {
-        private long row;
-        private ResultSet resultSet;
-        private java.util.function.Function<Boolean,ResultSet> resultSetFunction;
+        private StatementHolder statementHolder;
+        private java.util.function.Function<Boolean,StatementHolder> statementHolderFunction;
 
-        JdbcRecord(java.util.function.Function<Boolean,ResultSet> resultSetFunction) {
-            this.resultSetFunction = resultSetFunction;
+        JdbcRecord(java.util.function.Function<Boolean,StatementHolder> statementHolderFunction) {
+            this.statementHolderFunction = statementHolderFunction;
         }
 
         @SneakyThrows
         void init(){
-            if(resultSet!=null){
+            if(statementHolder !=null){
                 close();
             }
-            row=0;
-            resultSet = resultSetFunction.apply(Boolean.FALSE);
+            statementHolder = statementHolderFunction.apply(Boolean.FALSE);
         }
         @Override
         @SneakyThrows
         public boolean getBool(int col) {
-            boolean val = resultSet.getBoolean(col + 1);
-            if(resultSet.wasNull()){
+            boolean val = statementHolder.getResultSet().getBoolean(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getBool(col);
             }
             return val;
@@ -183,8 +182,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public byte getByte(int col) {
-            byte val = resultSet.getByte(col + 1);
-            if(resultSet.wasNull()){
+            byte val = statementHolder.getResultSet().getByte(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getByte(col);
             }
             return val;
@@ -193,15 +192,15 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public long getDate(int col) {
-            Date date = resultSet.getDate(col + 1);
+            Date date = statementHolder.getResultSet().getDate(col + 1);
             return date!=null ? date.getTime() : NULL.getDate(col);
         }
 
         @Override
         @SneakyThrows
         public double getDouble(int col) {
-            double val = resultSet.getDouble(col + 1);
-            if(resultSet.wasNull()){
+            double val = statementHolder.getResultSet().getDouble(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getDouble(col);
             }
             return val;
@@ -210,8 +209,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public float getFloat(int col) {
-            float val = resultSet.getFloat(col + 1);
-            if(resultSet.wasNull()){
+            float val = statementHolder.getResultSet().getFloat(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getFloat(col);
             }
             return val;
@@ -220,8 +219,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public int getInt(int col) {
-            int val = resultSet.getInt(col + 1);
-            if(resultSet.wasNull()){
+            int val = statementHolder.getResultSet().getInt(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getInt(col);
             }
             return val;
@@ -230,8 +229,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public long getLong(int col) {
-            long val = resultSet.getLong(col + 1);
-            if(resultSet.wasNull()){
+            long val = statementHolder.getResultSet().getLong(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getLong(col);
             }
             return val;
@@ -240,8 +239,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public short getShort(int col) {
-            short val = resultSet.getShort(col + 1);
-            if(resultSet.wasNull()){
+            short val = statementHolder.getResultSet().getShort(col + 1);
+            if(statementHolder.getResultSet().wasNull()){
                 return NULL.getShort(col);
             }
             return val;
@@ -250,38 +249,30 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public CharSequence getStr(int col) {
-            return resultSet.getString(col+1);
+            return statementHolder.getResultSet().getString(col+1);
         }
 
         @Override
         @SneakyThrows
         public long getTimestamp(int col) {
-            Timestamp timestamp = resultSet.getTimestamp(col + 1);
+            Timestamp timestamp = statementHolder.getResultSet().getTimestamp(col + 1);
             return timestamp!=null ? timestamp.getTime() : NULL.getLong(col);
-        }
-
-        @Override
-        public long getRowId() {
-            return row;
         }
 
         @SneakyThrows
         boolean next() {
-            row++;
-            return resultSet.next();
+            return statementHolder.getResultSet().next();
         }
 
         @Override
         public void close() throws IOException {
-            if(resultSet==null){
+            if(statementHolder ==null){
                 return;
             }
             try {
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new IOException(e);
+                statementHolder.close();
             } finally {
-                resultSet=null;
+                statementHolder =null;
             }
         }
     }
