@@ -39,12 +39,16 @@ import com.questdb.std.ObjList;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
+import javax.sql.DataSource;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.*;
+import java.util.logging.Logger;
 
 public class JdbcFunctionFactory implements FunctionFactory {
     private static final IntIntHashMap jdbcToQuestColumnType = new IntIntHashMap();
+
     static {
         jdbcToQuestColumnType.put(Types.VARCHAR, ColumnType.STRING);
         jdbcToQuestColumnType.put(Types.NVARCHAR, ColumnType.STRING);
@@ -81,10 +85,20 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
         final CharSequence query = args.getQuick(0).getStr(null);
         //TODO externalize database connection/ use pool
-        java.util.function.Function<Boolean, StatementHolder> statementHolderFunction = new java.util.function.Function<Boolean, StatementHolder>() {
+        StatementHolder statementHolder = getStatementHolder(query);
+        final GenericRecordMetadata metadata = getResultSetMetadata(statementHolder.getResultSet());
+        return new CursorFunction(
+                position,
+                new GenericRecordCursorFactory(metadata, new JdbcRecordCursor(statementHolder), false)
+        );
+    }
+
+    @NotNull
+    private StatementHolder getStatementHolder(CharSequence query) throws SQLException {
+
+        return new StatementHolder(new DataSource() {
             @Override
-            @SneakyThrows
-            public StatementHolder apply(Boolean strtuctureOnly) {
+            public Connection getConnection() throws SQLException {
                 Connection connection = DriverManager.getConnection("jdbc:h2:mem:", "", "");
                 try {
                     connection.createStatement().executeUpdate("CREATE TABLE TEST(X INT, XY LONG, DATA VARCHAR(255), ts TIMESTAMP)");
@@ -92,31 +106,60 @@ public class JdbcFunctionFactory implements FunctionFactory {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                PreparedStatement statement = connection.prepareStatement(String.valueOf(query));
-                if (strtuctureOnly) {
-                    statement.setMaxRows(0);
-                }
-                return new StatementHolder(connection, statement);
+                return connection;
             }
-        };
-        try (StatementHolder resultSet = statementHolderFunction.apply(Boolean.TRUE)){
-            final GenericRecordMetadata metadata = getResultSetMetadata(resultSet.getResultSet());
-            return new CursorFunction(
-                    position,
-                    new GenericRecordCursorFactory(metadata, new JdbcRecordCursor(statementHolderFunction), false)
-            );
-        }
+
+            @Override
+            public Connection getConnection(String s, String s1) throws SQLException {
+                return null;
+            }
+
+            @Override
+            public <T> T unwrap(Class<T> aClass) throws SQLException {
+                return null;
+            }
+
+            @Override
+            public boolean isWrapperFor(Class<?> aClass) throws SQLException {
+                return false;
+            }
+
+            @Override
+            public PrintWriter getLogWriter() throws SQLException {
+                return null;
+            }
+
+            @Override
+            public void setLogWriter(PrintWriter printWriter) throws SQLException {
+
+            }
+
+            @Override
+            public void setLoginTimeout(int i) throws SQLException {
+
+            }
+
+            @Override
+            public int getLoginTimeout() throws SQLException {
+                return 0;
+            }
+
+            @Override
+            public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+                return null;
+            }
+        }, String.valueOf(query), true);
     }
 
     @NotNull
     private GenericRecordMetadata getResultSetMetadata(ResultSet resultSet) throws SQLException {
         ResultSetMetaData metaData = resultSet.getMetaData();
         final GenericRecordMetadata metadata = new GenericRecordMetadata();
-        for(int columnIdx = 1; columnIdx<= metaData.getColumnCount(); columnIdx++){
+        for (int columnIdx = 1; columnIdx <= metaData.getColumnCount(); columnIdx++) {
             int columnType = jdbcToQuestColumnType.get(metaData.getColumnType(columnIdx));
-            if(columnType == -1){
+            if (columnType == -1) {
                 throw new IllegalArgumentException("JDBC column type isn't supported " +
-                                                        metaData.getColumnTypeName(columnIdx));
+                        metaData.getColumnTypeName(columnIdx));
             }
             metadata.add(new TableColumnMetadata(metaData.getColumnName(columnIdx), columnType));
         }
@@ -127,8 +170,8 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
         private final JdbcRecord record;
 
-        JdbcRecordCursor(java.util.function.Function<Boolean,StatementHolder> function) {
-            record = new JdbcRecord(function);
+        JdbcRecordCursor(StatementHolder statementHolder) {
+            record = new JdbcRecord(statementHolder);
         }
 
         @Override
@@ -156,24 +199,21 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
     static class JdbcRecord implements Record, Closeable {
         private StatementHolder statementHolder;
-        private java.util.function.Function<Boolean,StatementHolder> statementHolderFunction;
 
-        JdbcRecord(java.util.function.Function<Boolean,StatementHolder> statementHolderFunction) {
-            this.statementHolderFunction = statementHolderFunction;
+        JdbcRecord(StatementHolder statementHolder) {
+            this.statementHolder = statementHolder;
         }
 
         @SneakyThrows
-        void init(){
-            if(statementHolder !=null){
-                close();
-            }
-            statementHolder = statementHolderFunction.apply(Boolean.FALSE);
+        void init() {
+            statementHolder.createUnlimitedResultSet();
         }
+
         @Override
         @SneakyThrows
         public boolean getBool(int col) {
             boolean val = statementHolder.getResultSet().getBoolean(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getBool(col);
             }
             return val;
@@ -183,7 +223,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public byte getByte(int col) {
             byte val = statementHolder.getResultSet().getByte(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getByte(col);
             }
             return val;
@@ -193,14 +233,14 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public long getDate(int col) {
             Date date = statementHolder.getResultSet().getDate(col + 1);
-            return date!=null ? date.getTime() : NULL.getDate(col);
+            return date != null ? date.getTime() : NULL.getDate(col);
         }
 
         @Override
         @SneakyThrows
         public double getDouble(int col) {
             double val = statementHolder.getResultSet().getDouble(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getDouble(col);
             }
             return val;
@@ -210,7 +250,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public float getFloat(int col) {
             float val = statementHolder.getResultSet().getFloat(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getFloat(col);
             }
             return val;
@@ -220,7 +260,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public int getInt(int col) {
             int val = statementHolder.getResultSet().getInt(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getInt(col);
             }
             return val;
@@ -230,7 +270,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public long getLong(int col) {
             long val = statementHolder.getResultSet().getLong(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getLong(col);
             }
             return val;
@@ -240,7 +280,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @SneakyThrows
         public short getShort(int col) {
             short val = statementHolder.getResultSet().getShort(col + 1);
-            if(statementHolder.getResultSet().wasNull()){
+            if (statementHolder.getResultSet().wasNull()) {
                 return NULL.getShort(col);
             }
             return val;
@@ -249,14 +289,14 @@ public class JdbcFunctionFactory implements FunctionFactory {
         @Override
         @SneakyThrows
         public CharSequence getStr(int col) {
-            return statementHolder.getResultSet().getString(col+1);
+            return statementHolder.getResultSet().getString(col + 1);
         }
 
         @Override
         @SneakyThrows
         public long getTimestamp(int col) {
             Timestamp timestamp = statementHolder.getResultSet().getTimestamp(col + 1);
-            return timestamp!=null ? timestamp.getTime() : NULL.getLong(col);
+            return timestamp != null ? timestamp.getTime() : NULL.getLong(col);
         }
 
         @SneakyThrows
@@ -266,14 +306,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
         @Override
         public void close() throws IOException {
-            if(statementHolder ==null){
-                return;
-            }
-            try {
-                statementHolder.close();
-            } finally {
-                statementHolder =null;
-            }
+            statementHolder.close();
         }
     }
 }
