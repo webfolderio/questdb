@@ -42,9 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.sql.DataSource;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.*;
-import java.util.logging.Logger;
 
 public class JdbcFunctionFactory implements FunctionFactory {
     private static final IntIntHashMap jdbcToQuestColumnType = new IntIntHashMap();
@@ -76,79 +74,21 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
     @Override
     public String getSignature() {
-        return "jdbc(S)";
+        return "jdbc(SS)";
     }
 
     @Override
     @SneakyThrows
     public Function newInstance(ObjList<Function> args, int position, CairoConfiguration configuration) {
-
-        final CharSequence query = args.getQuick(0).getStr(null);
-        //TODO externalize database connection/ use pool
-        StatementHolder statementHolder = getStatementHolder(query);
+        final CharSequence dataSourceName = args.getQuick(0).getStr(null);
+        final CharSequence query = args.getQuick(1).getStr(null);
+        DataSource dataSource = ConnectionFunctionFactory.getDataSource(String.valueOf(dataSourceName));
+        StatementHolder statementHolder = new StatementHolder(dataSource, String.valueOf(query), true);
         final GenericRecordMetadata metadata = getResultSetMetadata(statementHolder.getResultSet());
         return new CursorFunction(
                 position,
                 new GenericRecordCursorFactory(metadata, new JdbcRecordCursor(statementHolder), false)
         );
-    }
-
-    @NotNull
-    private StatementHolder getStatementHolder(CharSequence query) throws SQLException {
-
-        return new StatementHolder(new DataSource() {
-            @Override
-            public Connection getConnection() throws SQLException {
-                Connection connection = DriverManager.getConnection("jdbc:h2:mem:", "", "");
-                try {
-                    connection.createStatement().executeUpdate("CREATE TABLE TEST(X INT, XY LONG, DATA VARCHAR(255), ts TIMESTAMP)");
-                    connection.createStatement().executeUpdate("INSERT INTO TEST(X,XY,DATA,ts) VALUES (1,30,'abc',now()),(2,301,'abc2',null)");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                return connection;
-            }
-
-            @Override
-            public Connection getConnection(String s, String s1) throws SQLException {
-                return null;
-            }
-
-            @Override
-            public <T> T unwrap(Class<T> aClass) throws SQLException {
-                return null;
-            }
-
-            @Override
-            public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-                return false;
-            }
-
-            @Override
-            public PrintWriter getLogWriter() throws SQLException {
-                return null;
-            }
-
-            @Override
-            public void setLogWriter(PrintWriter printWriter) throws SQLException {
-
-            }
-
-            @Override
-            public void setLoginTimeout(int i) throws SQLException {
-
-            }
-
-            @Override
-            public int getLoginTimeout() throws SQLException {
-                return 0;
-            }
-
-            @Override
-            public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-                return null;
-            }
-        }, String.valueOf(query), true);
     }
 
     @NotNull
