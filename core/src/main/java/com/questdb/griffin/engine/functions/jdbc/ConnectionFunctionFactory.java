@@ -30,6 +30,13 @@ public class ConnectionFunctionFactory implements FunctionFactory {
     private static final String COLUMN_JMX = "jmx";
     private static final String COLUMN_MAX_POOL_SIZE = "max_pool_size";
     private static final Map<String, HikariDataSource> DBCP = new ConcurrentHashMap<>();
+    private static final String TRANSACTION_ISOLATION = "transaction_isolation";
+    private static final String IDLE_TIMEOUT = "idle_timeout";
+    private static final String INITIALIZATION_FAIL_TIMEOUT = "initialization_fail_timeout";
+    private static final String CONNECTION_TIMEOUT = "connection_timeout";
+    private static final String MAX_LIFETIME = "max_lifetime";
+    private static final String MINIMUM_IDLE = "minimum_idle";
+    private static final String VALIDATION_TIMEOUT = "validation_timeout";
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> DBCP.values().forEach(HikariDataSource::close)));
@@ -56,6 +63,13 @@ public class ConnectionFunctionFactory implements FunctionFactory {
         int readOnlyIdx = getColumnIndex(metadata, COLUMN_READ_ONLY, ColumnType.BOOLEAN, false);
         int jmxIdx = getColumnIndex(metadata, COLUMN_JMX, ColumnType.BOOLEAN, false);
         int maxPoolSizeIdx = getColumnIndex(metadata, COLUMN_MAX_POOL_SIZE, ColumnType.INT, false);
+        int transactionIsolationIdx = getColumnIndex(metadata, TRANSACTION_ISOLATION, ColumnType.STRING, false);
+        int idleTimeoutIdx = getColumnIndex(metadata, IDLE_TIMEOUT, ColumnType.LONG, false);
+        int initializationFailTimeoutIdx = getColumnIndex(metadata, INITIALIZATION_FAIL_TIMEOUT, ColumnType.LONG, false);
+        int connectionTimeoutIdx = getColumnIndex(metadata, CONNECTION_TIMEOUT, ColumnType.LONG, false);
+        int maxLifetimeIdx = getColumnIndex(metadata, MAX_LIFETIME, ColumnType.LONG, false);
+        int minimumIdleIdx = getColumnIndex(metadata, MINIMUM_IDLE, ColumnType.INT, false);
+        int validationTimeoutIdx = getColumnIndex(metadata, VALIDATION_TIMEOUT, ColumnType.LONG, false);
 
         RecordCursor recordCursor = settings.getRecordCursorFactory().getCursor(null);
         while (recordCursor.hasNext()){
@@ -89,19 +103,28 @@ public class ConnectionFunctionFactory implements FunctionFactory {
             if(maxPoolSizeIdx!=-1){
                 configuration.setMaximumPoolSize(record.getInt(maxPoolSizeIdx));
             }
-
-            //configuration.setTransactionIsolation();
-            //configuration.setIdleTimeout();
-            //configuration.setInitializationFailTimeout();
-            //configuration.setConnectionTimeout();
-            //configuration.setMaxLifetime();
-            //configuration.setMinimumIdle();
-            //configuration.setValidationTimeout();
-
-            HikariDataSource dataSource = DBCP.putIfAbsent(poolName, new HikariDataSource(configuration));
-            if(dataSource != null){
-                dataSource.close();
+            if(transactionIsolationIdx!=-1){
+                configuration.setTransactionIsolation(String.valueOf(record.getStr(transactionIsolationIdx)));
             }
+            if(idleTimeoutIdx!=-1){
+                configuration.setIdleTimeout(record.getLong(idleTimeoutIdx));
+            }
+            if(initializationFailTimeoutIdx!=-1){
+                configuration.setInitializationFailTimeout(record.getLong(initializationFailTimeoutIdx));
+            }
+            if(connectionTimeoutIdx!=-1){
+                configuration.setConnectionTimeout(record.getLong(connectionTimeoutIdx));
+            }
+            if(maxLifetimeIdx!=-1){
+                configuration.setMaxLifetime(record.getLong(maxLifetimeIdx));
+            }
+            if(minimumIdleIdx!=-1){
+                configuration.setMinimumIdle(record.getInt(minimumIdleIdx));
+            }
+            if(validationTimeoutIdx!=-1){
+                configuration.setValidationTimeout(record.getLong(validationTimeoutIdx));
+            }
+            DBCP.computeIfAbsent(poolName, s -> new HikariDataSource(configuration));
         }
 
         return new NullConstant(position);
@@ -118,10 +141,10 @@ public class ConnectionFunctionFactory implements FunctionFactory {
         return columnIndex;
     }
 
-    static DataSource getDataSource(String dataSourceName) {
+    static DataSource getDataSource(String dataSourceName) throws SqlException{
         HikariDataSource dataSource = DBCP.get(dataSourceName);
         if (dataSource == null) {
-            throw new IllegalArgumentException("DataSource " + dataSourceName + " not found");
+            throw SqlException.$(1,"DataSource ").put(dataSourceName).put(" not found");
         }
         return dataSource;
     }

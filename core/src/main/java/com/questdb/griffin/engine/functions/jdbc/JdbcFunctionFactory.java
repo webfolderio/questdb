@@ -31,6 +31,7 @@ import com.questdb.cairo.sql.Function;
 import com.questdb.cairo.sql.NoRandomAccessRecordCursor;
 import com.questdb.cairo.sql.Record;
 import com.questdb.griffin.FunctionFactory;
+import com.questdb.griffin.SqlException;
 import com.questdb.griffin.engine.functions.CursorFunction;
 import com.questdb.griffin.engine.functions.GenericRecordCursorFactory;
 import com.questdb.ql.NullRecord;
@@ -79,7 +80,7 @@ public class JdbcFunctionFactory implements FunctionFactory {
 
     @Override
     @SneakyThrows
-    public Function newInstance(ObjList<Function> args, int position, CairoConfiguration configuration) {
+    public Function newInstance(ObjList<Function> args, int position, CairoConfiguration configuration) throws SqlException {
         final CharSequence dataSourceName = args.getQuick(0).getStr(null);
         final CharSequence query = args.getQuick(1).getStr(null);
         DataSource dataSource = ConnectionFunctionFactory.getDataSource(String.valueOf(dataSourceName));
@@ -92,14 +93,14 @@ public class JdbcFunctionFactory implements FunctionFactory {
     }
 
     @NotNull
-    private GenericRecordMetadata getResultSetMetadata(ResultSet resultSet) throws SQLException {
+    private GenericRecordMetadata getResultSetMetadata(ResultSet resultSet) throws SQLException, SqlException {
         ResultSetMetaData metaData = resultSet.getMetaData();
         final GenericRecordMetadata metadata = new GenericRecordMetadata();
         for (int columnIdx = 1; columnIdx <= metaData.getColumnCount(); columnIdx++) {
             int columnType = jdbcToQuestColumnType.get(metaData.getColumnType(columnIdx));
             if (columnType == -1) {
-                throw new IllegalArgumentException("JDBC column type isn't supported " +
-                        metaData.getColumnTypeName(columnIdx));
+                throw SqlException.$(1,"JDBC column type isn't supported ").
+                                    put(metaData.getColumnTypeName(columnIdx));
             }
             metadata.add(new TableColumnMetadata(metaData.getColumnName(columnIdx), columnType));
         }
