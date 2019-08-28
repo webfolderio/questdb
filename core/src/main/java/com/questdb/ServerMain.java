@@ -29,6 +29,7 @@ import com.questdb.cutlass.pgwire.PGWireServer;
 import com.questdb.log.Log;
 import com.questdb.log.LogFactory;
 import com.questdb.mp.WorkerPool;
+import com.questdb.plugin.GlobalComponent;
 import com.questdb.std.CharSequenceObjHashMap;
 import com.questdb.std.Misc;
 import com.questdb.std.Os;
@@ -46,6 +47,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -86,9 +89,10 @@ public class ServerMain {
         LogFactory.configureFromSystemProperties(workerPool);
         final Log log = LogFactory.getLog("server-main");
         final CairoEngine cairoEngine = new CairoEngine(configuration.getCairoConfiguration());
+        final Collection<GlobalComponent> globalComponents = getGlobalComponents();
         final HttpServer httpServer = HttpServer.create(configuration.getHttpServerConfiguration(), workerPool, log, cairoEngine);
         final PGWireServer pgWireServer = PGWireServer.create(configuration.getPGWireConfiguration(), workerPool, log, cairoEngine);
-
+        globalComponents.forEach(lifecycle -> lifecycle.init(cairoEngine));
         workerPool.start(log);
 
         if (Os.type != Os.WINDOWS && optHash.get("-n") == null) {
@@ -102,6 +106,7 @@ public class ServerMain {
             workerPool.halt();
             Misc.free(pgWireServer);
             Misc.free(httpServer);
+            globalComponents.forEach(Misc::free);
             Misc.free(cairoEngine);
             System.err.println(new Date() + " QuestDB is down");
         }));
@@ -109,6 +114,11 @@ public class ServerMain {
 
     public static void main(String[] args) throws Exception {
         new ServerMain(args);
+    }
+
+    private List<GlobalComponent> getGlobalComponents() {
+        ServiceLoader<GlobalComponent> globalComponents = ServiceLoader.load(GlobalComponent.class);
+        return StreamSupport.stream(globalComponents.spliterator(), false).collect(Collectors.toList());
     }
 
     private static CharSequenceObjHashMap<String> hashArgs(String[] args) {
