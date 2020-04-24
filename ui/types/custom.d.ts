@@ -21,6 +21,14 @@ declare module "docsearch.js" {
   export default function docsearch(config: Config): void
 }
 
+declare module "*.worker.ts" {
+  class TestWorker extends Worker {
+    constructor()
+  }
+
+  export default TestWorker
+}
+
 declare var BACKEND_PORT: number // eslint-disable-line no-var
 
 // eslint-disable-next-line no-var

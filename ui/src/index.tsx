@@ -1,5 +1,6 @@
 import "core-js/features/promise"
 import "./js/console"
+import startTelemetry from "./telemetry"
 
 import React from "react"
 import ReactDOM from "react-dom"
@@ -33,3 +34,5 @@ ReactDOM.render(
   </Provider>,
   document.getElementById("root"),
 )
+
+void startTelemetry()
